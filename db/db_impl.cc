@@ -36,6 +36,7 @@
 #include "util/mutexlock.h"
 
 std::chrono::nanoseconds n_yi(0);
+std::chrono::nanoseconds n_yi_wait_time(0);
 
 namespace leveldb {
 
@@ -1366,11 +1367,29 @@ namespace leveldb {
 				// We have filled up the current memtable, but the previous
 				// one is still being compacted, so we wait.
 				Log(options_.info_log, "Current memtable full; waiting...\n");
+
+				// TODO: Yi added the following line
+				std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+
 				background_work_finished_signal_.Wait();
+
+				// TODO: Yi added the following 3 lines.
+				std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+				auto duration = end - start;
+				n_yi_wait_time += std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
 			} else if (versions_->NumLevelFiles(0) >= config::kL0_StopWritesTrigger) {
 				// There are too many level-0 files.
 				Log(options_.info_log, "Too many L0 files; waiting...\n");
-				background_work_finished_signal_.Wait();
+
+                                // TODO: Yi added the following line
+                                std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+
+                                background_work_finished_signal_.Wait();
+
+                                // TODO: Yi added the following 3 lines.
+                                std::chrono::time_point<std::chrono::system_clock> end = std::chrono::system_clock::now();
+                                auto duration = end - start;
+                                n_yi_wait_time += std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
 			} else {
 				// Attempt to switch to a new memtable and trigger compaction of old
 				assert(versions_->PrevLogNumber() == 0);

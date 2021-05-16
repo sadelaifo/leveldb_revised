@@ -1019,6 +1019,7 @@ class Benchmark {
 }  // namespace leveldb
 
 int main(int argc, char** argv) {
+	using namespace std;
   FLAGS_write_buffer_size = leveldb::Options().write_buffer_size;
   FLAGS_max_file_size = leveldb::Options().max_file_size;
   FLAGS_block_size = leveldb::Options().block_size;
@@ -1079,12 +1080,22 @@ int main(int argc, char** argv) {
 
   // Choose a location for the test database if none given with --db=<path>
   if (FLAGS_db == nullptr) {
-    leveldb::g_env->GetTestDirectory(&default_db_path);
-    default_db_path += "/dbbench";
-    FLAGS_db = default_db_path.c_str();
+	  leveldb::g_env->GetTestDirectory(&default_db_path);
+	  default_db_path += "/dbbench";
+	  FLAGS_db = default_db_path.c_str();
   }
-
+  extern std::chrono::nanoseconds n_yi;
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+  std::chrono::nanoseconds n(0);
+  start = std::chrono::system_clock::now();
   leveldb::Benchmark benchmark;
   benchmark.Run();
+  end = std::chrono::system_clock::now();      
+  auto duration = end - start;
+  n += std::chrono::duration_cast<std::chrono::nanoseconds>(duration);
+  cout << "Total program time is " << n.count() << endl;
+  cout << "Total compaction time is xxxxxx " << n_yi.count() << endl;
+
+  cout << "Compaction fraction is " << (double) n_yi.count() / (double) n.count() * 100 << "%" << endl;
   return 0;
 }
